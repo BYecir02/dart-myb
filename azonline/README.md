@@ -257,7 +257,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 - [x] F1 : initialisation du projet
 - [x] F2 : configuration Firebase
 - [x] F3 : modèles de données
-- [ ] F4 : services et providers
+- [x] F4 : services et providers
 - [ ] F5 : authentification
 - [ ] F6 : peuplement des données fictives
 - [ ] F7 : stockage local
@@ -371,6 +371,32 @@ fictifs.
 
 _Cette section est complétée au fil du développement._
 
-| Difficulté | Contournement |
-| --- | --- |
-| _à compléter_ | _à compléter_ |
+### Les index composites de Firestore
+
+Associer un filtre `where` et un tri `orderBy` portant sur deux champs
+différents oblige Firestore à disposer d'un **index composite**, créé à la main
+dans la console. Sans lui, la requête ne renvoie pas de résultat vide : elle
+échoue à l'exécution. Trier les notes par date tout en filtrant sur l'enfant
+aurait donc imposé cette manipulation à toute personne clonant le dépôt.
+
+**Contournement :** les requêtes filtrent côté serveur et **trient côté Dart**,
+dans `ServiceFirestore`. Le volume de données d'un enfant se compte en dizaines
+de documents, le coût du tri en mémoire est négligeable, et le projet démarre
+sans aucune configuration supplémentaire dans la console.
+
+### Le passage à Riverpod 3
+
+Depuis la version 3, **tous les providers sont automatiquement supprimés dès
+qu'ils n'ont plus d'auditeur**. Les premiers tests des providers expiraient au
+bout de trente secondes : le flux des enfants était fermé avant même d'avoir
+émis sa première valeur, et l'attente ne se terminait jamais.
+
+**Contournement :** ouvrir un abonnement avec `container.listen` avant de lire
+la valeur dans les tests. Dans l'application, ce rôle est tenu naturellement par
+les widgets qui observent les providers, le comportement par défaut n'y pose
+donc aucun problème.
+
+Autre conséquence du passage à la version 3 : `StateProvider` est passé dans les
+API héritées. L'état modifiable est donc porté par des classes `Notifier`
+(`SelectionEnfant`, `JourSelectionne`), ce qui présente l'avantage de regrouper
+l'état et les méthodes qui le modifient dans une même classe.
