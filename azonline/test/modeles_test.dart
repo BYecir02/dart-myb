@@ -16,6 +16,7 @@ class FauxHorodatage {
   const FauxHorodatage(this.date);
 
   DateTime toDate() => date;
+
 }
 
 void main() {
