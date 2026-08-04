@@ -70,6 +70,7 @@ lib/
 │   └── theme_nature.dart              #   Palette + ThemeData de l'application
 │
 ├── modeles/                           # COUCHE MÉTIER : objets purs
+│   ├── conversions.dart               #   Lecture défensive des champs Firestore
 │   ├── utilisateur.dart               #   Le parent connecté
 │   ├── enfant.dart                    #   Un enfant rattaché au parent
 │   ├── note.dart                      #   Une évaluation
@@ -255,7 +256,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 
 - [x] F1 : initialisation du projet
 - [x] F2 : configuration Firebase
-- [ ] F3 : modèles de données
+- [x] F3 : modèles de données
 - [ ] F4 : services et providers
 - [ ] F5 : authentification
 - [ ] F6 : peuplement des données fictives
