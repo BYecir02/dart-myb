@@ -254,7 +254,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 ### Suivi d'avancement
 
 - [x] F1 : initialisation du projet
-- [ ] F2 : configuration Firebase
+- [x] F2 : configuration Firebase
 - [ ] F3 : modèles de données
 - [ ] F4 : services et providers
 - [ ] F5 : authentification
