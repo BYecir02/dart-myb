@@ -8,13 +8,13 @@ import '../theme/theme_nature.dart';
 import '../widgets/selecteur_enfant.dart';
 import 'page_detail_matiere.dart';
 import 'page_emploi_du_temps.dart';
+import 'page_profil.dart';
 import 'page_tableau_de_bord.dart';
 
 /// Coquille de l'application une fois le parent connecté.
 ///
-/// Elle porte la barre de navigation inférieure et conserve l'onglet actif.
-/// Le contenu de chaque onglet est ajouté par les étapes suivantes du plan :
-/// le tableau de bord en F9, l'emploi du temps en F11, le profil en F12.
+/// Elle porte la barre de navigation inférieure et conserve l'onglet actif :
+/// le tableau de bord, l'emploi du temps et le profil.
 class PagePrincipale extends ConsumerStatefulWidget {
   const PagePrincipale({super.key});
 
@@ -33,13 +33,6 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
         // contexte de tous les onglets, il doit rester visible en permanence.
         title: const SelecteurEnfant(),
         titleSpacing: MesuresNature.margeEcran,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Se déconnecter',
-            onPressed: _seDeconnecter,
-          ),
-        ],
       ),
 
       // IndexedStack conserve l'état de chaque onglet : la position de
@@ -50,11 +43,7 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
         children: [
           _accueil(),
           const PageEmploiDuTemps(),
-          const _ContenuAVenir(
-            icone: Icons.person_outline,
-            titre: 'Profil',
-            message: 'Vos informations et vos enfants arrivent ici.',
-          ),
+          const PageProfil(),
         ],
       ),
 
@@ -121,18 +110,6 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
     );
   }
 
-  /// Ferme la session.
-  ///
-  /// Les données locales sont effacées avant la déconnexion : sans cela, le
-  /// parent suivant à se connecter sur le même appareil retrouverait l'enfant
-  /// sélectionné et les notes en cache du précédent.
-  ///
-  /// Aucune navigation n'est nécessaire ensuite : le portail observe l'état de
-  /// connexion et réaffiche l'écran de connexion de lui-même.
-  Future<void> _seDeconnecter() async {
-    await ref.read(serviceStockageLocalProvider).oublierTout();
-    await ref.read(serviceAuthProvider).deconnexion();
-  }
 }
 
 /// Emplacement réservé pour un onglet dont le contenu n'est pas encore écrit.
