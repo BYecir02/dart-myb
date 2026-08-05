@@ -6,6 +6,7 @@ import '../modeles/enfant.dart';
 import '../outils/peupler_base.dart';
 import '../theme/theme_nature.dart';
 import '../widgets/selecteur_enfant.dart';
+import 'page_detail_matiere.dart';
 import 'page_tableau_de_bord.dart';
 
 /// Coquille de l'application une fois le parent connecté.
@@ -105,8 +106,21 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
         if (enfants.isEmpty) {
           return const EncartBaseVide();
         }
-        return const PageTableauDeBord();
+        return PageTableauDeBord(surMatiereChoisie: _ouvrirLaMatiere);
       },
+    );
+  }
+
+  /// Ouvre le détail d'une matière par-dessus l'onglet courant.
+  ///
+  /// La navigation est déclenchée ici plutôt que dans le tableau de bord :
+  /// celui-ci reste ainsi un écran d'affichage pur, montable seul dans un test
+  /// sans avoir à fournir un Navigator.
+  void _ouvrirLaMatiere(BuildContext context, String matiere) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => PageDetailMatiere(matiere: matiere),
+      ),
     );
   }
 
