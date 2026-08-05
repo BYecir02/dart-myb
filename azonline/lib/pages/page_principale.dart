@@ -7,6 +7,7 @@ import '../outils/peupler_base.dart';
 import '../theme/theme_nature.dart';
 import '../widgets/selecteur_enfant.dart';
 import 'page_detail_matiere.dart';
+import 'page_emploi_du_temps.dart';
 import 'page_tableau_de_bord.dart';
 
 /// Coquille de l'application une fois le parent connecté.
@@ -48,11 +49,7 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
         index: _ongletActif,
         children: [
           _accueil(),
-          const _ContenuAVenir(
-            icone: Icons.calendar_month_outlined,
-            titre: 'Emploi du temps',
-            message: 'Les cours de la semaine arrivent ici.',
-          ),
+          const PageEmploiDuTemps(),
           const _ContenuAVenir(
             icone: Icons.person_outline,
             titre: 'Profil',
