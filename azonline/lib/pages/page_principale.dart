@@ -111,9 +111,14 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
 
   /// Ferme la session.
   ///
-  /// Aucune navigation n'est nécessaire : le portail observe l'état de
+  /// Les données locales sont effacées avant la déconnexion : sans cela, le
+  /// parent suivant à se connecter sur le même appareil retrouverait l'enfant
+  /// sélectionné et les notes en cache du précédent.
+  ///
+  /// Aucune navigation n'est nécessaire ensuite : le portail observe l'état de
   /// connexion et réaffiche l'écran de connexion de lui-même.
   Future<void> _seDeconnecter() async {
+    await ref.read(serviceStockageLocalProvider).oublierTout();
     await ref.read(serviceAuthProvider).deconnexion();
   }
 }

@@ -1,12 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 import 'fournisseurs/fournisseurs.dart';
 import 'pages/page_configuration_requise.dart';
 import 'pages/page_connexion.dart';
 import 'pages/page_principale.dart';
+import 'services/service_stockage_local.dart';
 import 'theme/theme_nature.dart';
 
 /// Point d'entrée de AZOnline.
@@ -32,11 +34,21 @@ Future<void> main() async {
     messageDemarrage = 'Initialisation de Firebase impossible : $erreur';
   }
 
+  // Les préférences sont chargées une fois pour toutes ici. Le service de
+  // stockage local devient alors entièrement synchrone, ce qui permet aux
+  // providers de lire l'enfant mémorisé dès leur première construction.
+  final SharedPreferences preferences = await SharedPreferences.getInstance();
+
   runApp(
     // ProviderScope conserve l'état global de l'application. Il enveloppe
     // l'arbre entier dès le démarrage, sans quoi aucun provider ne serait
     // accessible depuis les pages.
     ProviderScope(
+      overrides: [
+        serviceStockageLocalProvider.overrideWithValue(
+          ServiceStockageLocal(preferences),
+        ),
+      ],
       child: ApplicationAZOnline(messageDemarrage: messageDemarrage),
     ),
   );

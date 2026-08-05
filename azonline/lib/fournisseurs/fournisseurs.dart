@@ -19,6 +19,7 @@ import '../modeles/note.dart';
 import '../modeles/utilisateur.dart';
 import '../services/service_auth.dart';
 import '../services/service_firestore.dart';
+import '../services/service_stockage_local.dart';
 
 // --- Les services ---
 
@@ -30,6 +31,22 @@ final serviceAuthProvider = Provider<ServiceAuth>((ref) {
 /// Instance unique du service de base de données.
 final serviceFirestoreProvider = Provider<ServiceFirestore>((ref) {
   return ServiceFirestore();
+});
+
+/// Instance unique du service de stockage local.
+///
+/// Ce provider n'a volontairement pas d'implémentation par défaut : l'accès aux
+/// préférences est asynchrone, et il est obtenu une seule fois au démarrage
+/// dans `main()`, qui remplace ce provider par l'instance prête. Toutes les
+/// lectures deviennent alors synchrones.
+///
+/// L'erreur ci-dessous ne se déclenche que si l'on oublie ce remplacement, ce
+/// qui se voit immédiatement plutôt que de produire un comportement silencieux.
+final serviceStockageLocalProvider = Provider<ServiceStockageLocal>((ref) {
+  throw UnimplementedError(
+    'serviceStockageLocalProvider doit être remplacé au démarrage '
+    'de l\'application.',
+  );
 });
 
 // --- L'état de connexion ---
@@ -74,15 +91,26 @@ final enfantsProvider = StreamProvider<List<Enfant>>((ref) {
 /// L'état ne contient que l'identifiant, pas l'objet complet : ainsi, une mise
 /// à jour de l'enfant en base se répercute sans avoir à ressaisir la sélection.
 ///
-/// La valeur est mémorisée sur le téléphone à l'étape F7, afin que
-/// l'application rouvre sur le même enfant.
+/// La valeur est mémorisée sur le téléphone : l'application rouvre sur le même
+/// enfant, sans que le parent ait à le resélectionner à chaque ouverture.
 class SelectionEnfant extends Notifier<String?> {
   @override
-  String? build() => null;
+  String? build() {
+    // Lecture synchrone : les préférences ont été chargées au démarrage.
+    // L'enfant mémorisé est donc disponible dès la première construction, sans
+    // passer par un état intermédiaire qui ferait clignoter l'interface.
+    return ref.read(serviceStockageLocalProvider).lireEnfantSelectionne();
+  }
 
-  /// Change l'enfant actif.
+  /// Change l'enfant actif et mémorise le choix sur l'appareil.
+  ///
+  /// L'écriture n'est pas attendue : l'interface doit basculer immédiatement,
+  /// et un échec d'écriture locale ne justifie pas de bloquer l'affichage.
   void choisir(String? identifiant) {
     state = identifiant;
+    ref.read(serviceStockageLocalProvider).enregistrerEnfantSelectionne(
+      identifiant,
+    );
   }
 }
 
@@ -110,23 +138,63 @@ final enfantSelectionneProvider = Provider<Enfant?>((ref) {
 
 // --- Les notes ---
 
-/// Évaluations de l'enfant sélectionné, de la plus récente à la plus ancienne.
-final notesProvider = StreamProvider<List<Note>>((ref) {
+/// Flux brut des évaluations de l'enfant sélectionné.
+///
+/// Chaque émission est recopiée dans le stockage local. C'est ce qui alimente
+/// la consultation hors connexion : les dernières notes vues restent lisibles
+/// même sans réseau.
+///
+/// L'écriture n'est pas attendue, pour ne pas retarder l'affichage des notes
+/// qui viennent d'arriver.
+final fluxDesNotesProvider = StreamProvider<List<Note>>((ref) {
   final Enfant? enfant = ref.watch(enfantSelectionneProvider);
   if (enfant == null) {
     return Stream.value(const <Note>[]);
   }
-  return ref.watch(serviceFirestoreProvider).notesEnTempsReel(enfant.id);
+
+  final ServiceStockageLocal stockage = ref.watch(serviceStockageLocalProvider);
+
+  return ref
+      .watch(serviceFirestoreProvider)
+      .notesEnTempsReel(enfant.id)
+      .map((notes) {
+        stockage.enregistrerNotesEnCache(enfant.id, notes);
+        return notes;
+      });
+});
+
+/// Les notes réellement affichées.
+///
+/// Tant que le réseau n'a rien renvoyé, ou s'il échoue, on retombe sur le
+/// cache local. Le parent voit donc les notes de sa dernière consultation
+/// plutôt qu'un écran vide, ce qui est la seule chose utile hors connexion.
+final notesProvider = Provider<List<Note>>((ref) {
+  final AsyncValue<List<Note>> flux = ref.watch(fluxDesNotesProvider);
+  if (flux.hasValue) {
+    return flux.value!;
+  }
+
+  final Enfant? enfant = ref.watch(enfantSelectionneProvider);
+  if (enfant == null) {
+    return const <Note>[];
+  }
+  return ref.watch(serviceStockageLocalProvider).lireNotesEnCache(enfant.id);
+});
+
+/// Date de la dernière lecture réussie, affichée sous le tableau de bord.
+final dateDerniereSynchroProvider = Provider<DateTime?>((ref) {
+  // Dépend du flux afin d'être recalculé à chaque arrivée de notes.
+  ref.watch(fluxDesNotesProvider);
+  return ref.watch(serviceStockageLocalProvider).lireDateDerniereSynchro();
 });
 
 /// Moyennes par matière, calculées à partir des notes.
 ///
 /// Le calcul vit dans le modèle [MoyenneMatiere] ; ce provider ne fait que
-/// l'appliquer au flux courant et mettre le résultat en cache tant que les
-/// notes ne changent pas.
+/// l'appliquer aux notes courantes et mettre le résultat en cache tant
+/// qu'elles ne changent pas.
 final moyennesProvider = Provider<List<MoyenneMatiere>>((ref) {
-  final List<Note> notes = ref.watch(notesProvider).value ?? const [];
-  return MoyenneMatiere.parMatiere(notes);
+  return MoyenneMatiere.parMatiere(ref.watch(notesProvider));
 });
 
 /// Moyenne générale, ou `null` si aucune note n'est disponible.
@@ -136,8 +204,7 @@ final moyenneGeneraleProvider = Provider<double?>((ref) {
 
 /// Les cinq évaluations les plus récentes, pour le tableau de bord.
 final dernieresNotesProvider = Provider<List<Note>>((ref) {
-  final List<Note> notes = ref.watch(notesProvider).value ?? const [];
-  return notes.take(5).toList();
+  return ref.watch(notesProvider).take(5).toList();
 });
 
 /// Évaluations d'une matière donnée, pour l'écran de détail.
@@ -148,8 +215,10 @@ final notesDeLaMatiereProvider = Provider.family<List<Note>, String>((
   ref,
   matiere,
 ) {
-  final List<Note> notes = ref.watch(notesProvider).value ?? const [];
-  return notes.where((note) => note.matiere == matiere).toList();
+  return ref
+      .watch(notesProvider)
+      .where((note) => note.matiere == matiere)
+      .toList();
 });
 
 // --- L'emploi du temps ---
