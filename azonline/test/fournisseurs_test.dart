@@ -1,14 +1,26 @@
 import 'package:azonline/fournisseurs/fournisseurs.dart';
 import 'package:azonline/modeles/enfant.dart';
+import 'package:azonline/services/service_stockage_local.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Vérifie la logique portée par les providers.
 ///
 /// Aucun de ces tests ne contacte Firebase : le flux des enfants est remplacé
-/// par une valeur fixe grâce aux `overrides` de Riverpod. C'est précisément ce
-/// que permet d'avoir isolé l'accès aux données derrière un service.
+/// par une valeur fixe grâce aux `overrides` de Riverpod, et les préférences
+/// sont simulées en mémoire. C'est précisément ce que permet d'avoir isolé
+/// l'accès aux données derrière des services.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late SharedPreferences preferences;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    preferences = await SharedPreferences.getInstance();
+  });
+
   Enfant enfant(String id, String prenom) {
     return Enfant.depuisFirestore(id, {
       'idParent': 'parent-1',
@@ -40,6 +52,9 @@ void main() {
     Future<ProviderContainer> conteneurAvec(List<Enfant> enfants) async {
       final ProviderContainer conteneur = ProviderContainer(
         overrides: [
+          serviceStockageLocalProvider.overrideWithValue(
+            ServiceStockageLocal(preferences),
+          ),
           enfantsProvider.overrideWith((ref) => Stream.value(enfants)),
         ],
       );
@@ -91,9 +106,29 @@ void main() {
       ]);
 
       // Cas réel : l'enfant mémorisé la veille a été retiré de la base.
-      conteneur.read(selectionEnfantProvider.notifier).choisir('enfant-supprime');
+      conteneur
+          .read(selectionEnfantProvider.notifier)
+          .choisir('enfant-supprime');
 
       expect(conteneur.read(enfantSelectionneProvider)?.id, 'e1');
+    });
+
+    test('le choix est relu depuis le stockage au redémarrage', () async {
+      // Premier lancement : le parent choisit le second enfant.
+      final ProviderContainer premierLancement = await conteneurAvec([
+        enfant('e1', 'Lina'),
+        enfant('e2', 'Noah'),
+      ]);
+      premierLancement.read(selectionEnfantProvider.notifier).choisir('e2');
+      expect(premierLancement.read(enfantSelectionneProvider)?.id, 'e2');
+
+      // Second lancement : un conteneur neuf, mais les mêmes préférences.
+      final ProviderContainer secondLancement = await conteneurAvec([
+        enfant('e1', 'Lina'),
+        enfant('e2', 'Noah'),
+      ]);
+
+      expect(secondLancement.read(enfantSelectionneProvider)?.id, 'e2');
     });
   });
 

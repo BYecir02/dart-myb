@@ -82,6 +82,29 @@ class Note {
     };
   }
 
+  /// Reconstruit une note depuis le cache local.
+  ///
+  /// Le format du cache est identique à celui de Firestore, à ceci près que la
+  /// date y est une chaîne ISO et que l'identifiant y figure. La lecture est
+  /// donc déléguée à [Note.depuisFirestore], qui sait déjà interpréter une date
+  /// en texte grâce à `versDate`.
+  factory Note.depuisJson(Map<String, dynamic> json) {
+    return Note.depuisFirestore(versTexte(json['id']), json);
+  }
+
+  /// Sérialise la note pour le stockage local.
+  ///
+  /// La date devient une chaîne ISO : `jsonEncode` ne sait pas écrire un
+  /// [DateTime]. L'identifiant est ajouté car, contrairement à Firestore, le
+  /// cache ne le porte pas ailleurs.
+  Map<String, dynamic> versJson() {
+    return {
+      ...versFirestore(),
+      'id': id,
+      'date': date?.toIso8601String(),
+    };
+  }
+
   /// La note ramenée sur 20, seule échelle comparable entre évaluations.
   ///
   /// Le barème est garanti strictement positif par le constructeur nommé, la
