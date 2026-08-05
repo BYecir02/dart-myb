@@ -21,7 +21,11 @@ import '../widgets/jauge_moyenne.dart';
 /// Cette page ne connaît ni Firestore ni SharedPreferences : elle lit des
 /// providers et affiche des objets Dart.
 class PageTableauDeBord extends ConsumerWidget {
-  /// Ouvre le détail d'une matière. Branché à l'étape F10.
+  /// Ouvre le détail d'une matière.
+  ///
+  /// Fourni par la page qui héberge le tableau de bord. Laissé à `null`, les
+  /// cartes de matière ne sont pas cliquables, ce qui permet de monter cet
+  /// écran seul dans un test sans avoir à fournir un Navigator.
   final void Function(BuildContext context, String matiere)? surMatiereChoisie;
 
   const PageTableauDeBord({super.key, this.surMatiereChoisie});
