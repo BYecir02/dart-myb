@@ -98,7 +98,8 @@ lib/
 │   ├── carte_matiere.dart
 │   ├── carte_cours.dart
 │   ├── selecteur_enfant.dart
-│   └── jauge_moyenne.dart
+│   ├── jauge_moyenne.dart
+│   └── message_central.dart           #   États vides et erreurs, partout pareil
 │
 └── outils/
     ├── validateurs.dart               # Règles de saisie des formulaires
@@ -268,7 +269,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 - [x] F10 : détail d'une matière
 - [x] F11 : emploi du temps
 - [x] F12 : profil
-- [ ] F13 : finitions de l'interface
+- [x] F13 : finitions de l'interface
 - [ ] F14 : documentation
 
 ---
