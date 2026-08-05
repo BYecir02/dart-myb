@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
+import 'fournisseurs/fournisseurs.dart';
 import 'pages/page_configuration_requise.dart';
+import 'pages/page_connexion.dart';
+import 'pages/page_principale.dart';
 import 'theme/theme_nature.dart';
 
 /// Point d'entrée de AZOnline.
@@ -33,7 +36,9 @@ Future<void> main() async {
     // ProviderScope conserve l'état global de l'application. Il enveloppe
     // l'arbre entier dès le démarrage, sans quoi aucun provider ne serait
     // accessible depuis les pages.
-    ProviderScope(child: ApplicationAZOnline(messageDemarrage: messageDemarrage)),
+    ProviderScope(
+      child: ApplicationAZOnline(messageDemarrage: messageDemarrage),
+    ),
   );
 }
 
@@ -70,53 +75,74 @@ class ApplicationAZOnline extends StatelessWidget {
       },
 
       home: messageDemarrage == null
-          ? const PageSocleProvisoire()
+          ? const PortailAuthentification()
           : PageConfigurationRequise(message: messageDemarrage!),
     );
   }
 }
 
-/// Écran provisoire affiché lorsque Firebase répond correctement.
+/// Portail : c'est lui qui rend le suivi scolaire inaccessible sans compte.
 ///
-/// Il n'a qu'un rôle de vérification : confirmer que le socle technique tient
-/// debout avant que les vraies pages n'existent. Il sera remplacé par le
-/// portail d'authentification à l'étape F5.
-class PageSocleProvisoire extends StatelessWidget {
-  const PageSocleProvisoire({super.key});
+/// Il observe l'état de connexion et choisit la page à afficher. Aucun écran
+/// protégé n'est joignable tant que [compteProvider] renvoie `null`, y compris
+/// en manipulant la navigation : il n'existe simplement aucune route vers eux.
+///
+/// C'est aussi ce qui dispense les pages de connexion et de déconnexion de
+/// naviguer elles-mêmes. Elles se contentent d'appeler le service ; le
+/// changement d'écran découle du nouvel état émis par Firebase.
+class PortailAuthentification extends ConsumerWidget {
+  const PortailAuthentification({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<Object?> etatDuCompte = ref.watch(compteProvider);
+
+    return etatDuCompte.when(
+      // Premier instant de l'application : Firebase vérifie s'il existe une
+      // session enregistrée sur l'appareil.
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (erreur, trace) => _ecranDErreur(erreur),
+      data: (compte) {
+        if (compte == null) {
+          return const PageConnexion();
+        }
+        return const PagePrincipale();
+      },
+    );
+  }
+
+  /// Affiché si le service d'authentification lui-même est en défaut.
+  Widget _ecranDErreur(Object erreur) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AZOnline')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(MesuresNature.margeEcran),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: PaletteNature.vertTendre.withValues(alpha: 0.20),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.eco_outlined,
-                  color: PaletteNature.vertFeuille,
-                  size: 44,
-                ),
+              const Icon(
+                Icons.cloud_off,
+                size: 56,
+                color: PaletteNature.terracotta,
               ),
-              const SizedBox(height: MesuresNature.espaceBloc),
-              Text(
-                'Firebase est connecté',
-                style: Theme.of(context).textTheme.headlineSmall,
+              const SizedBox(height: 16),
+              const Text(
+                'Service d\'authentification indisponible',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: PaletteNature.vertProfond,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Le socle technique répond correctement.\n'
-                'Les écrans de connexion arrivent à l\'étape suivante.',
+              Text(
+                '$erreur',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: PaletteNature.pierre, fontSize: 13),
+                style: const TextStyle(
+                  color: PaletteNature.pierre,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),

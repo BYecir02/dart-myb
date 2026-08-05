@@ -101,6 +101,7 @@ lib/
 │   └── jauge_moyenne.dart
 │
 └── outils/
+    ├── validateurs.dart               # Règles de saisie des formulaires
     └── peupler_base.dart              # Génération des données fictives
 ```
 
@@ -258,7 +259,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 - [x] F2 : configuration Firebase
 - [x] F3 : modèles de données
 - [x] F4 : services et providers
-- [ ] F5 : authentification
+- [x] F5 : authentification
 - [ ] F6 : peuplement des données fictives
 - [ ] F7 : stockage local
 - [ ] F8 : sélection de l'enfant
