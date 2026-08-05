@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../fournisseurs/fournisseurs.dart';
+import '../modeles/enfant.dart';
+import '../outils/peupler_base.dart';
 import '../theme/theme_nature.dart';
 
 /// Coquille de l'application une fois le parent connecté.
@@ -38,18 +40,14 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
       // arriverait si l'on reconstruisait la page à chaque fois.
       body: IndexedStack(
         index: _ongletActif,
-        children: const [
-          _ContenuAVenir(
-            icone: Icons.insights_outlined,
-            titre: 'Tableau de bord',
-            message: 'Les moyennes et les dernières notes arrivent ici.',
-          ),
-          _ContenuAVenir(
+        children: [
+          _accueil(),
+          const _ContenuAVenir(
             icone: Icons.calendar_month_outlined,
             titre: 'Emploi du temps',
             message: 'Les cours de la semaine arrivent ici.',
           ),
-          _ContenuAVenir(
+          const _ContenuAVenir(
             icone: Icons.person_outline,
             titre: 'Profil',
             message: 'Vos informations et vos enfants arrivent ici.',
@@ -78,6 +76,36 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Contenu de l'onglet d'accueil.
+  ///
+  /// Tant qu'aucun enfant n'est rattaché au compte, l'écran propose de générer
+  /// les données de démonstration : c'est le seul geste utile à ce stade, et
+  /// une page vide n'apprendrait rien au parent qui vient de s'inscrire.
+  ///
+  /// Le tableau de bord viendra remplacer le second cas en F9.
+  Widget _accueil() {
+    final AsyncValue<List<Enfant>> etatDesEnfants = ref.watch(enfantsProvider);
+
+    return etatDesEnfants.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (erreur, trace) => _ContenuAVenir(
+        icone: Icons.cloud_off,
+        titre: 'Lecture impossible',
+        message: '$erreur',
+      ),
+      data: (enfants) {
+        if (enfants.isEmpty) {
+          return const EncartBaseVide();
+        }
+        return const _ContenuAVenir(
+          icone: Icons.insights_outlined,
+          titre: 'Tableau de bord',
+          message: 'Les moyennes et les dernières notes arrivent ici.',
+        );
+      },
     );
   }
 
