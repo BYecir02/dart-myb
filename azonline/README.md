@@ -267,7 +267,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 - [x] F9 : tableau de bord
 - [x] F10 : détail d'une matière
 - [x] F11 : emploi du temps
-- [ ] F12 : profil
+- [x] F12 : profil
 - [ ] F13 : finitions de l'interface
 - [ ] F14 : documentation
 
