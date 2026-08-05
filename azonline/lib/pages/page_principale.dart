@@ -6,6 +6,7 @@ import '../modeles/enfant.dart';
 import '../outils/peupler_base.dart';
 import '../theme/theme_nature.dart';
 import '../widgets/selecteur_enfant.dart';
+import 'page_tableau_de_bord.dart';
 
 /// Coquille de l'application une fois le parent connecté.
 ///
@@ -104,11 +105,7 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
         if (enfants.isEmpty) {
           return const EncartBaseVide();
         }
-        return const _ContenuAVenir(
-          icone: Icons.insights_outlined,
-          titre: 'Tableau de bord',
-          message: 'Les moyennes et les dernières notes arrivent ici.',
-        );
+        return const PageTableauDeBord();
       },
     );
   }

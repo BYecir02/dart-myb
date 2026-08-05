@@ -102,6 +102,7 @@ lib/
 │
 └── outils/
     ├── validateurs.dart               # Règles de saisie des formulaires
+    ├── formats.dart                   # Mise en forme des dates en français
     └── peupler_base.dart              # Génération des données fictives
 ```
 
@@ -263,7 +264,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 - [x] F6 : peuplement des données fictives
 - [x] F7 : stockage local
 - [x] F8 : sélection de l'enfant
-- [ ] F9 : tableau de bord
+- [x] F9 : tableau de bord
 - [ ] F10 : détail d'une matière
 - [ ] F11 : emploi du temps
 - [ ] F12 : profil
