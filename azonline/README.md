@@ -260,7 +260,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 - [x] F3 : modèles de données
 - [x] F4 : services et providers
 - [x] F5 : authentification
-- [ ] F6 : peuplement des données fictives
+- [x] F6 : peuplement des données fictives
 - [ ] F7 : stockage local
 - [ ] F8 : sélection de l'enfant
 - [ ] F9 : tableau de bord
