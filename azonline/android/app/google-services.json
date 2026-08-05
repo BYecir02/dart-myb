@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "756952856503",
+    "project_id": "azonline-a3069",
+    "storage_bucket": "azonline-a3069.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:756952856503:android:476c4b3321feec24f6da32",
+        "android_client_info": {
+          "package_name": "com.azonline.azonline"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7uxpAuq7f4JIC7FJ3P4k2F2rogGpuWTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
