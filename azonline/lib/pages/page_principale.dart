@@ -5,6 +5,7 @@ import '../fournisseurs/fournisseurs.dart';
 import '../modeles/enfant.dart';
 import '../outils/peupler_base.dart';
 import '../theme/theme_nature.dart';
+import '../widgets/selecteur_enfant.dart';
 
 /// Coquille de l'application une fois le parent connecté.
 ///
@@ -25,7 +26,10 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AZOnline'),
+        // Le titre porte le sélecteur d'enfant : l'enfant consulté est le
+        // contexte de tous les onglets, il doit rester visible en permanence.
+        title: const SelecteurEnfant(),
+        titleSpacing: MesuresNature.margeEcran,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

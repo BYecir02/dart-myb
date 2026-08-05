@@ -262,7 +262,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 - [x] F5 : authentification
 - [x] F6 : peuplement des données fictives
 - [x] F7 : stockage local
-- [ ] F8 : sélection de l'enfant
+- [x] F8 : sélection de l'enfant
 - [ ] F9 : tableau de bord
 - [ ] F10 : détail d'une matière
 - [ ] F11 : emploi du temps
