@@ -32,7 +32,9 @@ peu ergonomiques.
 
 | Nom | Prénom |
 | --- | --- |
-| _à compléter_ | _à compléter_ |
+| Badirou | Mohamed Yecir |
+
+Projet réalisé seul.
 
 ---
 
@@ -86,12 +88,13 @@ lib/
 │   └── fournisseurs.dart              #   Providers Riverpod + calcul des moyennes
 │
 ├── pages/                             # COUCHE PRÉSENTATION
-│   ├── page_connexion.dart
+│   ├── page_configuration_requise.dart#   Affichée si Firebase n'est pas relié
+│   ├── page_connexion.dart            #   Connexion et inscription
 │   ├── page_principale.dart           #   Barre de navigation inférieure
-│   ├── page_tableau_de_bord.dart
-│   ├── page_detail_matiere.dart
-│   ├── page_emploi_du_temps.dart
-│   └── page_profil.dart
+│   ├── page_tableau_de_bord.dart      #   Moyennes et dernières notes
+│   ├── page_detail_matiere.dart       #   Toutes les évaluations d'une matière
+│   ├── page_emploi_du_temps.dart      #   Une journée à la fois
+│   └── page_profil.dart               #   Parent, enfants, déconnexion
 │
 ├── widgets/                           # Composants réutilisables
 │   ├── carte_note.dart
@@ -105,6 +108,20 @@ lib/
     ├── validateurs.dart               # Règles de saisie des formulaires
     ├── formats.dart                   # Mise en forme des dates en français
     └── peupler_base.dart              # Génération des données fictives
+
+test/                                  # 99 tests, aucun accès réseau
+├── modeles_test.dart                  #   Les cinq modèles et les conversions
+├── fournisseurs_test.dart             #   Logique des providers
+├── stockage_local_test.dart           #   Préférences simulées en mémoire
+├── validateurs_test.dart              #   Règles de saisie
+├── theme_nature_test.dart             #   Code couleur des notes
+├── peuplement_test.dart               #   Cohérence des données fictives
+├── application_test.dart              #   Aiguillage de démarrage
+├── selecteur_enfant_test.dart         #   Sélection et mémorisation
+├── tableau_de_bord_test.dart          #   Formats de date et synthèse
+├── detail_matiere_test.dart           #   Filtrage par matière
+├── emploi_du_temps_test.dart          #   Jours, cours courant, erreur réseau
+└── profil_test.dart                   #   Profil et déconnexion
 ```
 
 ### 4.2 La justification de l'architecture
@@ -270,7 +287,7 @@ Une branche par fonctionnalité, fusionnée dans `develop` une fois terminée.
 - [x] F11 : emploi du temps
 - [x] F12 : profil
 - [x] F13 : finitions de l'interface
-- [ ] F14 : documentation
+- [x] F14 : documentation
 
 ---
 
@@ -345,34 +362,56 @@ docs(readme): rediger la justification de l architecture
 
 ---
 
-## 9. Installation
+## 9. Lancer le projet
+
+Le dépôt contient déjà `lib/firebase_options.dart` et
+`android/app/google-services.json` : il est rattaché à un projet Firebase
+existant et **fonctionne sans configuration supplémentaire**.
 
 ```bash
-# 1. Récupérer les dépendances
 flutter pub get
-
-# 2. Rattacher le projet à Firebase (une seule fois)
-flutterfire configure
-
-# 3. Lancer l'application
-flutter run
+flutter run          # ou : flutter run -d chrome
 ```
 
-**Prérequis côté console Firebase :**
+> Ces fichiers contiennent des clés publiques, destinées à être embarquées dans
+> l'application livrée. La sécurité d'un projet Firebase ne repose pas sur elles
+> mais sur les règles d'accès. Les versionner est le fonctionnement prévu, et
+> c'est ce qui permet de lancer le projet sans étape préalable.
 
-1. Créer un projet sur [console.firebase.google.com](https://console.firebase.google.com)
-2. Activer **Authentication**, puis le fournisseur **Email / Mot de passe**
-3. Créer la base **Cloud Firestore**
+### Le premier lancement
 
-Au premier lancement, créer un compte puis utiliser le bouton « Générer mes
-données de démo » pour remplir la base avec les enfants, les notes et les cours
-fictifs.
+1. Sur l'écran d'accueil, choisir **« Pas encore de compte ? En créer un »**
+2. Saisir un prénom, un nom, une adresse électronique et un mot de passe d'au
+   moins six caractères
+3. Une fois connecté, appuyer sur **« Générer mes données »**
+
+Le bouton crée deux enfants, vingt-huit notes et quarante-quatre cours, soit
+soixante-quatorze documents fictifs. L'application est alors entièrement
+utilisable.
+
+### Lancer les tests
+
+```bash
+flutter analyze      # aucun problème attendu
+flutter test         # 99 tests
+```
+
+Aucun test ne contacte Firebase : les flux distants sont remplacés par des
+valeurs fixes grâce aux `overrides` de Riverpod, et les préférences sont
+simulées en mémoire.
+
+### Repartir d'un projet Firebase neuf
+
+```bash
+flutterfire configure
+```
+
+Côté console : créer le projet, activer **Authentication** puis le fournisseur
+**Email / Mot de passe**, et créer la base **Cloud Firestore**.
 
 ---
 
 ## 10. Les difficultés rencontrées
-
-_Cette section est complétée au fil du développement._
 
 ### Les index composites de Firestore
 
@@ -403,3 +442,34 @@ Autre conséquence du passage à la version 3 : `StateProvider` est passé dans 
 API héritées. L'état modifiable est donc porté par des classes `Notifier`
 (`SelectionEnfant`, `JourSelectionne`), ce qui présente l'avantage de regrouper
 l'état et les méthodes qui le modifient dans une même classe.
+
+### Deux pièges des tests de widgets
+
+**La police de substitution.** La jauge de moyenne débordait de 58 pixels dans
+les tests, alors qu'elle s'affichait correctement dans l'application. En test,
+Flutter remplace Roboto par une police dont chaque caractère occupe un carré
+plein, bien plus large. Le débordement n'était donc pas un artefact : une
+moyenne à trois chiffres l'aurait provoqué en conditions réelles.
+
+**Contournement :** corriger le widget plutôt que le test, avec un `FittedBox`
+qui réduit le texte au lieu de le laisser dépasser.
+
+**La recherche par type.** `find.byType(OutlinedButton)` ne trouvait pas le
+bouton de déconnexion. En cause : `OutlinedButton.icon` construit une
+sous-classe privée, et `byType` compare le **type exact**, sans accepter les
+sous-types.
+
+**Contournement :** viser l'icône du bouton, qui est sans ambiguïté.
+
+### Ce qui n'a pas été fait
+
+Deux limites sont assumées plutôt que masquées :
+
+- **Les règles Firestore sont en mode test**, donc ouvertes. Une version
+  destinée à un usage réel devrait restreindre chaque document au parent
+  propriétaire, en s'appuyant sur le champ `idParent` déjà présent dans le
+  modèle de données.
+- **Seules les notes sont mises en cache** pour la consultation hors connexion.
+  L'emploi du temps affiche un message d'erreur explicite en cas de coupure. Le
+  mécanisme de cache est en place et s'étendrait aux cours sans changement de
+  conception.
