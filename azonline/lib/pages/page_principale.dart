@@ -5,6 +5,7 @@ import '../fournisseurs/fournisseurs.dart';
 import '../modeles/enfant.dart';
 import '../outils/peupler_base.dart';
 import '../theme/theme_nature.dart';
+import '../widgets/message_central.dart';
 import '../widgets/selecteur_enfant.dart';
 import 'page_detail_matiere.dart';
 import 'page_emploi_du_temps.dart';
@@ -76,17 +77,14 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
   /// Tant qu'aucun enfant n'est rattaché au compte, l'écran propose de générer
   /// les données de démonstration : c'est le seul geste utile à ce stade, et
   /// une page vide n'apprendrait rien au parent qui vient de s'inscrire.
-  ///
-  /// Le tableau de bord viendra remplacer le second cas en F9.
   Widget _accueil() {
     final AsyncValue<List<Enfant>> etatDesEnfants = ref.watch(enfantsProvider);
 
     return etatDesEnfants.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (erreur, trace) => _ContenuAVenir(
-        icone: Icons.cloud_off,
-        titre: 'Lecture impossible',
-        message: '$erreur',
+      error: (erreur, trace) => MessageCentral.erreur(
+        erreur,
+        titre: 'Impossible de lire vos enfants',
       ),
       data: (enfants) {
         if (enfants.isEmpty) {
@@ -106,49 +104,6 @@ class _EtatPagePrincipale extends ConsumerState<PagePrincipale> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) => PageDetailMatiere(matiere: matiere),
-      ),
-    );
-  }
-
-}
-
-/// Emplacement réservé pour un onglet dont le contenu n'est pas encore écrit.
-///
-/// Il sera remplacé par la vraie page à l'étape correspondante du plan.
-class _ContenuAVenir extends StatelessWidget {
-  final IconData icone;
-  final String titre;
-  final String message;
-
-  const _ContenuAVenir({
-    required this.icone,
-    required this.titre,
-    required this.message,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(MesuresNature.margeEcran),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icone,
-              size: 56,
-              color: PaletteNature.pierre.withValues(alpha: 0.60),
-            ),
-            const SizedBox(height: 16),
-            Text(titre, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
       ),
     );
   }

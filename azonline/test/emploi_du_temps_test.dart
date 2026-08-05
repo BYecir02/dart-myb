@@ -145,6 +145,45 @@ void main() {
     expect(find.text('en cours'), findsOneWidget);
   });
 
+  testWidgets('une lecture en échec affiche un message et non un écran vide', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          serviceStockageLocalProvider.overrideWithValue(
+            ServiceStockageLocal(preferences),
+          ),
+          enfantsProvider.overrideWith(
+            (ref) => Stream.value([
+              Enfant.depuisFirestore('e1', {
+                'idParent': 'p1',
+                'prenom': 'Lina',
+                'nom': 'Moreau',
+              }),
+            ]),
+          ),
+          coursProvider.overrideWith(
+            (ref) => Stream<List<Cours>>.error(Exception('réseau injoignable')),
+          ),
+        ],
+        child: MaterialApp(
+          theme: ThemeNature.construire(),
+          home: const Scaffold(body: PageEmploiDuTemps()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Impossible de lire l\'emploi du temps'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('réseau injoignable'), findsOneWidget);
+    // La barre des jours reste utilisable malgré l'erreur.
+    expect(find.text('Lu'), findsOneWidget);
+  });
+
   testWidgets('consulter un autre jour n\'allume aucun créneau', (
     tester,
   ) async {

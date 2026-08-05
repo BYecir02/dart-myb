@@ -5,6 +5,7 @@ import '../fournisseurs/fournisseurs.dart';
 import '../modeles/cours.dart';
 import '../theme/theme_nature.dart';
 import '../widgets/carte_cours.dart';
+import '../widgets/message_central.dart';
 
 /// Emploi du temps de la semaine, affiché un jour à la fois.
 ///
@@ -31,11 +32,43 @@ class PageEmploiDuTemps extends ConsumerWidget {
       children: [
         _selecteurDeJour(ref, jour),
         Expanded(
-          child: etat.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _journee(context, cours, reference),
+          child: RefreshIndicator(
+            // Même geste que sur le tableau de bord : relancer la lecture
+            // depuis Firestore. Le flux se rétablit seul en temps normal, ce
+            // geste sert surtout au retour de connexion.
+            onRefresh: () async => ref.invalidate(coursProvider),
+            child: etat.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (erreur, trace) => _defilable(
+                MessageCentral.erreur(
+                  erreur,
+                  titre: 'Impossible de lire l\'emploi du temps',
+                ),
+              ),
+              data: (_) => _journee(context, cours, reference),
+            ),
+          ),
         ),
       ],
+    );
+  }
+
+  /// Rend un contenu fixe défilable.
+  ///
+  /// Le geste de rafraîchissement exige un descendant qui défile. Sans cette
+  /// enveloppe, tirer sur un message d'erreur ou sur une journée vide ne
+  /// déclencherait rien.
+  Widget _defilable(Widget contenu) {
+    return LayoutBuilder(
+      builder: (context, contraintes) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: contraintes.maxHeight),
+            child: contenu,
+          ),
+        );
+      },
     );
   }
 
@@ -104,10 +137,17 @@ class PageEmploiDuTemps extends ConsumerWidget {
     DateTime reference,
   ) {
     if (cours.isEmpty) {
-      return _aucunCours(context);
+      return _defilable(
+        const MessageCentral(
+          icone: Icons.free_breakfast_outlined,
+          titre: 'Aucun cours ce jour',
+          message: 'Journée libre, ou emploi du temps non renseigné.',
+        ),
+      );
     }
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(MesuresNature.margeEcran),
       itemCount: cours.length,
       itemBuilder: (context, index) {
@@ -126,33 +166,4 @@ class PageEmploiDuTemps extends ConsumerWidget {
     );
   }
 
-  /// Message affiché pour une journée sans cours.
-  Widget _aucunCours(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(MesuresNature.margeEcran),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.free_breakfast_outlined,
-              size: 48,
-              color: PaletteNature.pierre,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Aucun cours ce jour',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Journée libre, ou emploi du temps non renseigné.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: PaletteNature.pierre, fontSize: 13),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

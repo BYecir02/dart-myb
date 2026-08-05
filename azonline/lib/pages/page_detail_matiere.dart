@@ -8,6 +8,7 @@ import '../modeles/note.dart';
 import '../theme/theme_nature.dart';
 import '../widgets/carte_note.dart';
 import '../widgets/jauge_moyenne.dart';
+import '../widgets/message_central.dart';
 
 /// Détail d'une matière : toutes les évaluations et la moyenne associée.
 ///
@@ -144,26 +145,9 @@ class PageDetailMatiere extends ConsumerWidget {
   /// existe, mais possible si la dernière note est supprimée pendant la
   /// consultation.
   Widget _aucuneNote(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(MesuresNature.margeEcran),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.assignment_outlined,
-              size: 48,
-              color: PaletteNature.pierre,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Aucune note en $matiere',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ],
-        ),
-      ),
+    return MessageCentral(
+      icone: Icons.assignment_outlined,
+      titre: 'Aucune note en $matiere',
     );
   }
 }
